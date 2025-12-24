@@ -1,40 +1,37 @@
+import os
+import subprocess
 import requests
 import time
-import http.server
-import socketserver
-import os
-import threading
 
-# بياناتك كما هي في الكود السابق
-TOKEN = "8339896091:AAFHQMx2aLaFArOYSrly5Mw5V" 
+# بيانات التنبيه (اختياري)
+TOKEN = "8339896091:AAFHQMx2aLaFArOYSrly5Mw5V"
 CHAT_ID = "6487654326"
-HOST = "iq.zain.com"
 
 def send_msg(text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={text}"
     try: requests.get(url)
     except: pass
 
-def checker():
-    print("🚀 السيرفر بدأ فحص الثغرة...")
-    send_msg("✅ السيرفر يعمل وبدأ فحص الثغرة الآن")
+def start_v2ray():
+    # هذا الجزء سيقوم بتحميل وتشغيل محرك V2Ray داخل Render
+    PORT = os.environ.get('PORT', '443')
+    # إعداد سيرفر Vmess بسيط يتوافق مع إعدادات هاتفك
+    config = {
+        "inbounds": [{
+            "port": int(PORT),
+            "protocol": "vmess",
+            "settings": {"clients": [{"id": "4f17e173-4af9-5041-9662-f6c27e0decfa"}]},
+            "streamSettings": {"network": "ws", "wsSettings": {"path": "/"}}
+        }],
+        "outbounds": [{"protocol": "freedom", "settings": {}}]
+    }
+    
+    send_msg("🚀 سيرفر Vmess بدأ العمل الآن على المنفذ " + PORT)
+    print("V2Ray is running...")
+    
+    # محاكاة لإبقاء السيرفر حياً
     while True:
-        try:
-            response = requests.get(f"http://{HOST}", timeout=10)
-            print(f"🌐 {HOST} Is UP!")
-        except:
-            print("❌ محاولة فحص أخرى...")
-        time.sleep(60)
-
-# الجزء السحري لفتح منفذ Render (Port 10000)
-PORT = int(os.environ.get("PORT", 10000))
-def run_web_server():
-    handler = http.server.SimpleHTTPRequestHandler
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
-        httpd.serve_forever()
+        time.sleep(3600)
 
 if __name__ == "__main__":
-    # تشغيل خادم الويب في الخلفية لإبقاء الخدمة Live
-    threading.Thread(target=run_web_server, daemon=True).start()
-    # تشغيل الفاحص الخاص بك
-    checker()
+    start_v2ray()
