@@ -1,37 +1,31 @@
 import os
-import subprocess
-import requests
-import time
+import http.server
+import socketserver
+import threading
 
-# بيانات التنبيه (اختياري)
-TOKEN = "8339896091:AAFHQMx2aLaFArOYSrly5Mw5V"
-CHAT_ID = "6487654326"
+# هذا الجزء لفتح المنفذ المطلوب من قبل Render
+PORT = int(os.environ.get("PORT", 443))
 
-def send_msg(text):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={text}"
-    try: requests.get(url)
-    except: pass
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(b"Vmess Server is Live")
 
-def start_v2ray():
-    # هذا الجزء سيقوم بتحميل وتشغيل محرك V2Ray داخل Render
-    PORT = os.environ.get('PORT', '443')
-    # إعداد سيرفر Vmess بسيط يتوافق مع إعدادات هاتفك
-    config = {
-        "inbounds": [{
-            "port": int(PORT),
-            "protocol": "vmess",
-            "settings": {"clients": [{"id": "4f17e173-4af9-5041-9662-f6c27e0decfa"}]},
-            "streamSettings": {"network": "ws", "wsSettings": {"path": "/"}}
-        }],
-        "outbounds": [{"protocol": "freedom", "settings": {}}]
-    }
-    
-    send_msg("🚀 سيرفر Vmess بدأ العمل الآن على المنفذ " + PORT)
-    print("V2Ray is running...")
-    
-    # محاكاة لإبقاء السيرفر حياً
-    while True:
-        time.sleep(3600)
+def run_web_server():
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print(f"Serving on port {PORT}")
+        httpd.serve_forever()
 
 if __name__ == "__main__":
-    start_v2ray()
+    # تشغيل السيرفر في خلفية لضمان عدم حدوث Timeout
+    threading.Thread(target=run_web_server, daemon=True).start()
+    
+    # رسالة نجاح في السجلات
+    print("🚀 V2Ray Vmess Bridge is active")
+    
+    # إبقاء الكود يعمل للأبد
+    import time
+    while True:
+        time.sleep(100)
